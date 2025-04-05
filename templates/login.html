@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - JWT Demo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .auth-option {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Login</h1>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="auth-option bg-danger bg-opacity-25">
+                    <h3>Scenario 1: Vulnerable to Replay</h3>
+                    <p>Login without certificate protection</p>
+                    <form action="/login" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" value="alice" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" name="password" class="form-control" value="password123" required>
+                        </div>
+                        <input type="hidden" name="auth_type" value="without_cert">
+                        <button type="submit" class="btn btn-danger">Login (Vulnerable)</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="auth-option bg-success bg-opacity-25">
+                    <h3>Scenario 2: Protected Against Replay</h3>
+                    <p>Login with certificate protection</p>
+                    <form action="/login" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" value="alice" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" name="password" class="form-control" value="password123" required>
+                        </div>
+                        <input type="hidden" name="auth_type" value="with_cert">
+                        <button type="submit" class="btn btn-success">Login (Protected)</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <a href="/" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Certificate Authentication - JWT Demo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Certificate Authentication</h1>
+
+        <div class="alert alert-info">
+            <p>Performing TLS-like certificate-based authentication with sequence number...</p>
+            <div class="spinner-border text-primary" role="status" id="loading-spinner">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <div id="error-container" class="alert alert-danger d-none"></div>
+
+        <input type="hidden" id="nonce" value="{{ nonce }}">
+        <input type="hidden" id="username" value="{{ username }}">
+        <input type="hidden" id="sequence_number" value="{{ sequence_number }}">
+    </div>
+
+    <script>
+        // Simulate TLS handshake with certificate auth
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(performCertAuth, 1000); // Small delay for UI
+        });
+
+        async function performCertAuth() {
+            try {
+                const nonce = document.getElementById('nonce').value;
+                const username = document.getElementById('username').value;
+                const sequenceNumber = parseInt(document.getElementById('sequence_number').value);
+
+                // Send to server
+                const response = await fetch('/cert_auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        nonce: nonce,
+                        sequence_number: sequenceNumber
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Store sequence number in localStorage for demo purposes
+                    localStorage.setItem('currentSequenceNumber', data.sequence_number);
+                    window.location.href = data.redirect;
+                } else {
+                    showError(data.error || 'Authentication failed');
+                }
+            } catch (error) {
+                showError('Error during certificate authentication: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.textContent = message;
+            errorContainer.classList.remove('d-none');
+            document.getElementById('loading-spinner').classList.add('d-none');
+        }
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

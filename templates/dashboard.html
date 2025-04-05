@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - JWT Demo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .resource-section, .attack-section {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .token-display {
+            word-break: break-all;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        #results-container {
+            margin-top: 20px;
+        }
+        .data-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+            margin-top: 10px;
+            font-family: monospace;
+        }
+        .attack-data-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #dc3545;
+            margin-top: 10px;
+            font-family: monospace;
+        }
+        .sequence-info {
+            background-color: #e9ecef;
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-3">Welcome, {{ username }}</h1>
+
+        {% if auth_type == 'without_cert' %}
+        <div class="alert alert-danger">
+            <strong>Scenario 1:</strong> You are using a JWT without certificate protection (vulnerable to replay attacks)
+        </div>
+        {% else %}
+        <div class="alert alert-success">
+            <strong>Scenario 2:</strong> You are using a JWT with TLS-like certificate protection and sequence numbers (protected against replay attacks)
+            <div class="sequence-info mt-2">
+                Your current sequence number: <span class="badge bg-primary">{{ sequence_number }}</span>
+                <br>
+                <small class="text-muted">In a TLS-like system, sequence numbers prevent replay attacks by enforcing order and rejecting out-of-sequence packets</small>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header">
+                Your JWT Token
+            </div>
+            <div class="card-body">
+                <div class="token-display" id="jwt-token">{{ token }}</div>
+                <div class="mt-2">
+                    <a href="/attacker" target="_blank" class="btn btn-warning btn-sm">Open Attacker Page</a>
+                    <small class="text-muted ms-2">Open this page to simulate an attacker attempting to use your token</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="resource-section bg-light">
+                    <h3>Access Protected Resource</h3>
+                    <p>Click below to access a protected API resource using your token:</p>
+                    <button id="access-resource" class="btn btn-primary">Access Resource</button>
+                    <div id="resource-result" class="mt-3"></div>
+                    <div id="sensitive-data-container" class="data-display mt-3 d-none">
+                        <h5>Sensitive Data Retrieved:</h5>
+                        <div id="sensitive-data"></div>
+                        {% if auth_type == 'with_cert' %}
+                        <div class="mt-2">
+                            <small>Sequence Number: <span id="response-sequence"></span></small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="/login" class="btn btn-secondary">Logout</a>
+            <a href="/" class="btn btn-outline-secondary">Home</a>
+        </div>
+    </div>
+
+    <script>
+        // Store some state
+        const authType = "{{ auth_type }}";
+        const jwtToken = "{{ token }}";
+
+        document.getElementById('access-resource').addEventListener('click', async function() {
+            const resultElement = document.getElementById('resource-result');
+            const sensitiveDataContainer = document.getElementById('sensitive-data-container');
+            const sensitiveDataElement = document.getElementById('sensitive-data');
+            const sequenceElement = document.getElementById('response-sequence');
+
+            resultElement.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Accessing resource...';
+            sensitiveDataContainer.classList.add('d-none');
+
+            try {
+                const response = await fetch(`/api/resource?auth_type=${authType}`, {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultElement.innerHTML = `<div class="alert alert-success">Success: ${data.message}</div>`;
+
+                    // Show sensitive data
+                    if (data.sensitive_data) {
+                        sensitiveDataElement.textContent = data.sensitive_data;
+                        sensitiveDataContainer.classList.remove('d-none');
+
+                        // Show sequence number if available
+                        if (sequenceElement && data.sequence_number) {
+                            sequenceElement.textContent = data.sequence_number;
+                        }
+                    }
+                } else {
+                    resultElement.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

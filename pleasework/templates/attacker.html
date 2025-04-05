@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JWT Replay Attack Simulator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #212529;
+            color: #f8f9fa;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .attacker-console {
+            background-color: #000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            padding: 20px;
+            font-family: monospace;
+        }
+        .token-input {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 10px;
+            font-family: monospace;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .btn-hack {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .stolen-data {
+            background-color: #300;
+            color: #ff9999;
+            border: 1px solid #dc3545;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+        }
+        .attack-log {
+            height: 150px;
+            overflow-y: auto;
+            margin-top: 20px;
+            background-color: #111;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success-log {
+            color: #00ff00;
+        }
+        .error-log {
+            color: #ff6666;
+        }
+        .info-log {
+            color: #66ccff;
+        }
+        .sequence-info {
+            background-color: #001529;
+            color: #0af;
+            border: 1px solid #003;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">
+            <span class="text-danger">[ ATTACKER CONSOLE ]</span>
+            JWT Replay Attack Simulator
+        </h1>
+
+        <div class="card bg-dark text-light mb-4">
+            <div class="card-header">
+                <h4>Replay Attack Simulator</h4>
+            </div>
+            <div class="card-body attacker-console">
+                <h5>Captured Token:</h5>
+                <p class="mb-2">Enter the JWT token intercepted from the legitimate user:</p>
+                <textarea id="token-input" class="token-input" rows="5" placeholder="Paste intercepted JWT token here..."></textarea>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="auth_type" id="without_cert" value="without_cert" checked>
+                    <label class="form-check-label" for="without_cert">
+                        Standard JWT (without certificate)
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="auth_type" id="with_cert" value="with_cert">
+                    <label class="form-check-label" for="with_cert">
+                        TLS-like Certificate-protected JWT with Sequence Numbers
+                    </label>
+                    <div class="sequence-info mt-2" id="sequence-info">
+                        <p>In TLS-style protection, each request uses an incrementing sequence number:</p>
+                        <ul>
+                            <li>The server tracks the expected sequence number</li>
+                            <li>If a replayed token is used, the sequence number won't match</li>
+                            <li>The server will reject requests with invalid sequence numbers</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button id="execute-attack" class="btn btn-hack">Execute Replay Attack</button>
+
+                <div id="attack-log" class="attack-log">
+                    <div class="info-log">[SYSTEM] Waiting for input...</div>
+                </div>
+
+                <div id="stolen-data-container" class="stolen-data d-none">
+                    <h5>STOLEN DATA:</h5>
+                    <div id="stolen-data"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Educational Purposes Only:</strong> This is a demonstration of JWT security vulnerabilities and TLS-like protections. Always use proper token security measures in real applications.
+        </div>
+
+        <a href="/" class="btn btn-outline-light">Return to Demo Home</a>
+    </div>
+
+    <script>
+        document.getElementById('execute-attack').addEventListener('click', async function() {
+            const tokenInput = document.getElementById('token-input').value.trim();
+            const authType = document.querySelector('input[name="auth_type"]:checked').value;
+            const attackLog = document.getElementById('attack-log');
+            const stolenDataContainer = document.getElementById('stolen-data-container');
+            const stolenDataElement = document.getElementById('stolen-data');
+
+            if (!tokenInput) {
+                logMessage('No token provided. Attack aborted.', 'error');
+                return;
+            }
+
+            logMessage(`Preparing to execute replay attack with ${authType} token...`, 'info');
+
+            if (authType === 'with_cert') {
+                logMessage('Warning: Target uses TLS-like protection with sequence numbers', 'info');
+                logMessage('Attempting to decode token...', 'info');
+
+                try {
+                    // Try to parse the token to show the sequence number
+                    const tokenParts = tokenInput.split('.');
+                    if (tokenParts.length === 3) {
+                        const payload = JSON.parse(atob(tokenParts[1]));
+                        if (payload.sequence_number) {
+                            logMessage(`Token contains sequence number: ${payload.sequence_number}`, 'info');
+                        }
+                    }
+                } catch (e) {
+                    logMessage('Failed to decode token details', 'error');
+                }
+            }
+
+            logMessage('Executing replay attack...', 'info');
+
+            try {
+                const response = await fetch('/simulate_mitm', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        token: tokenInput,
+                        auth_type: authType
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    logMessage('ATTACK SUCCESSFUL! Sensitive data obtained!', 'success');
+                    stolenDataElement.innerHTML = `<pre>${data.sensitive_data}</pre>`;
+                    if (data.sequence_info) {
+                        stolenDataElement.innerHTML += `<div class="mt-2"><small>Sequence info: ${data.sequence_info}</small></div>`;
+                    }
+                    stolenDataContainer.classList.remove('d-none');
+                } else {
+                    logMessage(`ATTACK FAILED: ${data.error}`, 'error');
+                    stolenDataContainer.classList.add('d-none');
+                }
+            } catch (error) {
+                logMessage(`ERROR: ${error.message}`, 'error');
+            }
+        });
+
+        function logMessage(message, type) {
+            const attackLog = document.getElementById('attack-log');
+            const logEntry = document.createElement('div');
+
+            logEntry.className = type === 'error' ? 'error-log' :
+                                  type === 'success' ? 'success-log' : 'info-log';
+
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            attackLog.appendChild(logEntry);
+            attackLog.scrollTop = attackLog.scrollHeight;
+        }
+    </script>

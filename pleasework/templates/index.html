@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JWT Replay Attack Demo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">JWT Replay Attack Demo</h1>
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                Introduction
+            </div>
+            <div class="card-body">
+                <p>This demo illustrates two scenarios:</p>
+                <ol>
+                    <li>A vulnerable JWT implementation susceptible to replay attacks</li>
+                    <li>A secure implementation using digital certificates to prevent replay attacks</li>
+                </ol>
+                <p>In this enhanced demo, you can:</p>
+                <ul>
+                    <li>Log in as a legitimate user and access protected resources</li>
+                    <li>Open a separate attacker console that simulates an intercepted token</li>
+                    <li>Execute a replay attack to steal sensitive data</li>
+                    <li>See how certificate-based protection defeats replay attempts</li>
+                </ul>
+                <p>Click below to begin the demo:</p>
+                <a href="/login" class="btn btn-primary">Start Demo</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                How it works
+            </div>
+            <div class="card-body">
+                <h5>Scenario 1: Vulnerable to Replay Attack</h5>
+                <p>In this scenario, a standard JWT token is used without any protection against replay attacks. A man-in-the-middle attacker can capture the token and reuse it to access protected resources and steal sensitive data.</p>
+                <p>You'll see that both legitimate and attacker requests succeed, demonstrating the vulnerability.</p>
+
+                <h5>Scenario 2: Protected with Certificate</h5>
+                <p>In this scenario, client authentication is performed using a digital certificate. The authentication process includes:</p>
+                <ul>
+                    <li>Client certificate validation</li>
+                    <li>Nonce-based challenge-response</li>
+                    <li>One-time use tokens</li>
+                </ul>
+                <p>When the attacker tries to replay the token, the server detects it has been used before and denies access.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                Demo Instructions
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li>Click "Start Demo" and log in using either authentication method</li>
+                    <li>Once logged in, click the "Open Attacker Page" button to launch the attacker console in a new tab</li>
+                    <li>Copy your JWT token from the dashboard and paste it into the attacker console</li>
+                    <li>In your original dashboard tab, click "Access Resource" to view your sensitive data</li>
+                    <li>In the attacker tab, click "Execute Replay Attack" to attempt stealing the same data</li>
+                    <li>Observe the different outcomes based on which authentication method you selected</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
